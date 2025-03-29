@@ -42,6 +42,8 @@ export async function POST(request: Request) {
     const from = formData.get('From') as string;
     const body = formData.get('Body') as string;
 
+    console.log('formData', formData);
+
     if (!from || !body) {
       return NextResponse.json(
         { error: 'Missing required fields' },
