@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { PhoneAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithCredential } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -15,34 +15,58 @@ export function PhoneAuth() {
   const [verificationId, setVerificationId] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [isClient, setIsClient] = useState(false);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
     setIsClient(true);
+    // Clean up reCAPTCHA on unmount
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    };
   }, []);
 
   const setupRecaptcha = () => {
-    if (typeof window === 'undefined' || !auth) return null;
+    if (typeof window === 'undefined' || !auth) {
+      console.error('Auth not initialized or not in browser environment');
+      return null;
+    }
     
-    if (!(window as any).recaptchaVerifier) {
-      try {
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    try {
+      if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'normal',
           callback: () => {
-            // reCAPTCHA solved
+            // reCAPTCHA solved, enable the Send Code button if needed
           },
+          'expired-callback': () => {
+            // Reset the reCAPTCHA when it expires
+            if (recaptchaVerifierRef.current) {
+              recaptchaVerifierRef.current.clear();
+              recaptchaVerifierRef.current = null;
+            }
+            toast.error('reCAPTCHA expired, please try again');
+          }
         });
-      } catch (error) {
-        console.error('Error setting up reCAPTCHA:', error);
-        toast.error('Error setting up authentication');
-        return null;
       }
+      return recaptchaVerifierRef.current;
+    } catch (error) {
+      console.error('Error setting up reCAPTCHA:', error);
+      toast.error('Error setting up authentication. Please refresh the page and try again.');
+      return null;
     }
-    return (window as any).recaptchaVerifier;
   };
 
   const handleSendCode = async () => {
     if (!auth) {
       toast.error('Authentication not initialized');
+      return;
+    }
+
+    if (!phoneNumber) {
+      toast.error('Please enter a phone number');
       return;
     }
 
@@ -53,7 +77,13 @@ export function PhoneAuth() {
         return;
       }
 
-      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+94${phoneNumber}`;
+      // Ensure phone number is in international format
+      const formattedPhone = phoneNumber.startsWith('+') 
+        ? phoneNumber 
+        : phoneNumber.startsWith('0') 
+          ? `+94${phoneNumber.slice(1)}` 
+          : `+94${phoneNumber}`;
+
       const confirmationResult = await signInWithPhoneNumber(
         auth,
         formattedPhone,
@@ -63,16 +93,24 @@ export function PhoneAuth() {
       setStep('otp');
       toast.success('Verification code sent successfully!');
     } catch (error) {
-      console.error(error);
-      toast.error('Error sending verification code');
+      console.error('Error sending verification code:', error);
       // Reset reCAPTCHA on error
-      (window as any).recaptchaVerifier = null;
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+      toast.error('Error sending verification code. Please try again.');
     }
   };
 
   const handleVerifyCode = async () => {
     if (!auth) {
       toast.error('Authentication not initialized');
+      return;
+    }
+
+    if (!verificationCode) {
+      toast.error('Please enter the verification code');
       return;
     }
 
@@ -85,8 +123,8 @@ export function PhoneAuth() {
       // Redirect to dashboard or home page after successful verification
       window.location.href = '/dashboard';
     } catch (error) {
-      console.error(error);
-      toast.error('Invalid verification code');
+      console.error('Error verifying code:', error);
+      toast.error('Invalid verification code. Please try again.');
     }
   };
 
@@ -107,9 +145,16 @@ export function PhoneAuth() {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
+            <p className="text-xs text-gray-500">
+              Enter your number with country code (e.g., +94XXXXXXXXX) or local format (e.g., 0XXXXXXXXX)
+            </p>
           </div>
-          <div id="recaptcha-container"></div>
-          <Button onClick={handleSendCode} className="w-full">
+          <div id="recaptcha-container" className="flex justify-center"></div>
+          <Button 
+            onClick={handleSendCode} 
+            className="w-full"
+            disabled={!phoneNumber}
+          >
             Send Verification Code
           </Button>
         </div>
@@ -125,12 +170,23 @@ export function PhoneAuth() {
               onChange={(e) => setVerificationCode(e.target.value)}
             />
           </div>
-          <Button onClick={handleVerifyCode} className="w-full">
+          <Button 
+            onClick={handleVerifyCode} 
+            className="w-full"
+            disabled={!verificationCode}
+          >
             Verify Code
           </Button>
           <Button
             variant="outline"
-            onClick={() => setStep('phone')}
+            onClick={() => {
+              setStep('phone');
+              // Reset reCAPTCHA when going back
+              if (recaptchaVerifierRef.current) {
+                recaptchaVerifierRef.current.clear();
+                recaptchaVerifierRef.current = null;
+              }
+            }}
             className="w-full"
           >
             Back
