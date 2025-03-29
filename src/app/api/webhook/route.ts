@@ -13,7 +13,7 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-// Parse expense message in format: amount, category, note
+// Parse expense message in format: amount category at location
 function parseExpenseMessage(message: string) {
   // Remove 'Expense:' prefix if present and trim
   const cleanMessage = message.replace(/^Expense:\s*/i, '').trim();
@@ -79,8 +79,8 @@ export async function POST(request: Request) {
       where: {
         OR: [
           { whatsappName: normalizedNumber },
-          { whatsappName: normalizedNumber.replace(/^94/, '0') }, // Convert international to local format
-          { whatsappName: '94' + normalizedNumber.replace(/^0/, '') }, // Convert local to international format
+          { whatsappName: normalizedNumber.replace(/^94/, '0') },
+          { whatsappName: '94' + normalizedNumber.replace(/^0/, '') },
         ],
       },
     });
@@ -110,16 +110,43 @@ export async function POST(request: Request) {
 
       // Ensure proper WhatsApp number format for Twilio
       const twilioTo = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
-      const twilioFrom = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
+      const twilioFrom = process.env.TWILIO_PHONE_NUMBER
+        ? `whatsapp:${process.env.TWILIO_PHONE_NUMBER.replace(/^\+/, '')}`
+        : '';
 
-      // Send confirmation message
-      await twilioClient.messages.create({
-        body: `Expense recorded:\nAmount: ${amount}\nCategory: ${category}${
-          note ? `\nNote: ${note}` : ''
-        }`,
-        from: twilioFrom,
-        to: twilioTo,
-      });
+      if (!twilioFrom) {
+        console.error('TWILIO_PHONE_NUMBER environment variable is not set');
+        return NextResponse.json(
+          {
+            success: true,
+            warning:
+              'Expense recorded but confirmation message could not be sent',
+          },
+          { status: 200 }
+        );
+      }
+
+      try {
+        // Send confirmation message
+        await twilioClient.messages.create({
+          body: `Expense recorded:\nAmount: ${amount}\nCategory: ${category}${
+            note ? `\nNote: ${note}` : ''
+          }`,
+          from: twilioFrom,
+          to: twilioTo,
+        });
+      } catch (twilioError) {
+        console.error('Failed to send confirmation message:', twilioError);
+        // Still return success since the expense was recorded
+        return NextResponse.json(
+          {
+            success: true,
+            warning:
+              'Expense recorded but confirmation message could not be sent',
+          },
+          { status: 200 }
+        );
+      }
 
       return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
@@ -127,14 +154,22 @@ export async function POST(request: Request) {
 
       // Ensure proper WhatsApp number format for Twilio
       const twilioTo = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
-      const twilioFrom = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
+      const twilioFrom = process.env.TWILIO_PHONE_NUMBER
+        ? `whatsapp:${process.env.TWILIO_PHONE_NUMBER.replace(/^\+/, '')}`
+        : '';
 
-      // Send error message to user
-      await twilioClient.messages.create({
-        body: `Error: ${error instanceof Error ? error.message : 'Invalid format'}. Please use format: amount category at location`,
-        from: twilioFrom,
-        to: twilioTo,
-      });
+      if (twilioFrom) {
+        try {
+          // Send error message to user
+          await twilioClient.messages.create({
+            body: `Error: ${error instanceof Error ? error.message : 'Invalid format'}. Please use format: amount category at location`,
+            from: twilioFrom,
+            to: twilioTo,
+          });
+        } catch (twilioError) {
+          console.error('Failed to send error message:', twilioError);
+        }
+      }
 
       return NextResponse.json(
         { error: 'Invalid message format' },
