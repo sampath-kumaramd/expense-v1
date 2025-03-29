@@ -47,7 +47,7 @@ function parseExpenseMessage(message: string) {
   return {
     amount,
     category,
-    note: location || null,
+    description: location || null,
   };
 }
 
@@ -78,10 +78,13 @@ export async function POST(request: Request) {
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { whatsappName: normalizedNumber },
-          { whatsappName: normalizedNumber.replace(/^94/, '0') },
-          { whatsappName: '94' + normalizedNumber.replace(/^0/, '') },
+          { phoneNumber: normalizedNumber },
+          { phoneNumber: normalizedNumber.replace(/^94/, '0') },
+          { phoneNumber: '94' + normalizedNumber.replace(/^0/, '') },
         ],
+      },
+      include: {
+        sheets: true,
       },
     });
 
@@ -91,21 +94,72 @@ export async function POST(request: Request) {
 
     try {
       // Parse expense message
-      const { amount, category, note } = parseExpenseMessage(body);
+      const { amount, category, description } = parseExpenseMessage(body);
+
+      // Get the default sheet (first sheet)
+      const defaultSheet = user.sheets[0];
+      if (!defaultSheet) {
+        return NextResponse.json(
+          { error: 'No sheet found for user' },
+          { status: 400 }
+        );
+      }
 
       // Create expense record
       const expense = await prisma.expense.create({
         data: {
           amount,
           category,
-          note,
+          description,
           userId: user.id,
+          sheetId: defaultSheet.id,
         },
       });
 
       // Update Google Sheet
-      if (user.sheetId) {
-        // TODO: Implement Google Sheets update logic
+      if (defaultSheet.url) {
+        try {
+          // Initialize Google Sheets API with service account
+          const auth = new google.auth.GoogleAuth({
+            credentials: JSON.parse(
+              process.env.GOOGLE_SERVICE_ACCOUNT_KEY || ''
+            ),
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+          });
+
+          const sheets = google.sheets({ version: 'v4', auth });
+
+          // Extract sheet ID from URL
+          const sheetIdMatch = defaultSheet.url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+          if (!sheetIdMatch) {
+            console.error('Invalid Google Sheet URL format');
+            throw new Error('Invalid Google Sheet URL format');
+          }
+          const spreadsheetId = sheetIdMatch[1];
+
+          // Prepare the values to append
+          const values = [
+            [
+              new Date().toISOString(),
+              amount.toString(),
+              category,
+              description || '',
+            ],
+          ];
+
+          // Append values to the sheet
+          await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Sheet1!A:D', // Assumes first sheet and columns A-D
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+              values,
+            },
+          });
+        } catch (error) {
+          console.error('Failed to update Google Sheet:', error);
+          // Continue with the response as the expense is still recorded in the database
+        }
       }
 
       // Ensure proper WhatsApp number format for Twilio
@@ -130,7 +184,7 @@ export async function POST(request: Request) {
         // Send confirmation message
         await twilioClient.messages.create({
           body: `Expense recorded:\nAmount: ${amount}\nCategory: ${category}${
-            note ? `\nNote: ${note}` : ''
+            description ? `\nDescription: ${description}` : ''
           }`,
           from: twilioFrom,
           to: twilioTo,

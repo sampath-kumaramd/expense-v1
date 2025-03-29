@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function Home() {
   const handleRegistration = async (data: {
-    whatsappName: string;
+    phoneNumber: string;
     sheetUrl: string;
   }) => {
     try {
@@ -17,7 +17,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          whatsappName: data.phoneNumber, // Keep this for backward compatibility
+          sheetUrl: data.sheetUrl,
+        }),
       });
 
       if (!response.ok) {

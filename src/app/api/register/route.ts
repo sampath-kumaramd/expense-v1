@@ -7,19 +7,19 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { whatsappName, sheetUrl } = await request.json();
+    const { whatsappName: phoneNumber, sheetUrl } = await request.json();
 
     // Validate input
-    if (!whatsappName || !sheetUrl) {
+    if (!phoneNumber || !sheetUrl) {
       return NextResponse.json(
-        { error: 'WhatsApp name and sheet URL are required' },
+        { error: 'Phone number and sheet URL are required' },
         { status: 400 }
       );
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { whatsappName },
+      where: { phoneNumber },
     });
 
     if (existingUser) {
@@ -32,8 +32,13 @@ export async function POST(request: Request) {
     // Create new user
     const user = await prisma.user.create({
       data: {
-        whatsappName,
-        sheetUrl,
+        phoneNumber,
+        sheets: {
+          create: {
+            name: 'Default Sheet',
+            url: sheetUrl,
+          },
+        },
       },
     });
 

@@ -5,7 +5,7 @@ import * as Form from '@radix-ui/react-form';
 import { Button } from './ui/button';
 
 interface UserRegistrationFormProps {
-  onSubmit: (data: { whatsappName: string; sheetUrl: string }) => Promise<void>;
+  onSubmit: (data: { phoneNumber: string; sheetUrl: string }) => Promise<void>;
 }
 
 export function UserRegistrationForm({ onSubmit }: UserRegistrationFormProps) {
@@ -16,19 +16,19 @@ export function UserRegistrationForm({ onSubmit }: UserRegistrationFormProps) {
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
-    let whatsappName = formData.get('whatsappName') as string;
+    let phoneNumber = formData.get('phoneNumber') as string;
     const sheetUrl = formData.get('sheetUrl') as string;
 
     // Normalize the phone number by removing any non-digit characters and handling international format
-    whatsappName = whatsappName.replace(/[^\d]/g, '');
-    if (whatsappName.startsWith('94')) {
-      whatsappName = '0' + whatsappName.slice(2); // Convert to local format
-    } else if (!whatsappName.startsWith('0')) {
-      whatsappName = '0' + whatsappName; // Add leading zero if missing
+    phoneNumber = phoneNumber.replace(/[^\d]/g, '');
+    if (phoneNumber.startsWith('94')) {
+      phoneNumber = '0' + phoneNumber.slice(2); // Convert to local format
+    } else if (!phoneNumber.startsWith('0')) {
+      phoneNumber = '0' + phoneNumber; // Add leading zero if missing
     }
 
     try {
-      await onSubmit({ whatsappName, sheetUrl });
+      await onSubmit({ phoneNumber, sheetUrl });
     } catch (error) {
       console.error('Error registering user:', error);
     } finally {
@@ -38,11 +38,11 @@ export function UserRegistrationForm({ onSubmit }: UserRegistrationFormProps) {
 
   return (
     <Form.Root className="space-y-6" onSubmit={handleSubmit}>
-      <Form.Field name="whatsappName">
+      <Form.Field name="phoneNumber">
         <div className="flex items-baseline justify-between">
-          <Form.Label className="text-sm font-medium">WhatsApp Number</Form.Label>
+          <Form.Label className="text-sm font-medium">Phone Number</Form.Label>
           <Form.Message className="text-sm text-red-500" match="valueMissing">
-            Please enter your WhatsApp number
+            Please enter your phone number
           </Form.Message>
         </div>
         <Form.Control asChild>
@@ -50,7 +50,7 @@ export function UserRegistrationForm({ onSubmit }: UserRegistrationFormProps) {
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             type="tel"
             required
-            placeholder="Enter your WhatsApp number (e.g., 0760937443)"
+            placeholder="Enter your phone number (e.g., 0760937443)"
           />
         </Form.Control>
         <p className="mt-1 text-xs text-gray-500">
