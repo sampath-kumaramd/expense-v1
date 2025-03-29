@@ -54,9 +54,20 @@ export async function POST(request: Request) {
     // Extract WhatsApp number from the 'from' field (remove 'whatsapp:' prefix)
     const whatsappNumber = from.replace('whatsapp:', '');
 
-    // Find user by WhatsApp number
-    const user = await prisma.user.findUnique({
-      where: { whatsappName: whatsappNumber },
+    // Normalize the phone number by removing '+' and any leading zeros
+    const normalizedNumber = whatsappNumber
+      .replace(/^\+/, '')
+      .replace(/^0/, '');
+
+    // Find user by WhatsApp number, trying both formats
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { whatsappName: normalizedNumber },
+          { whatsappName: normalizedNumber.replace(/^94/, '0') }, // Convert international to local format
+          { whatsappName: '94' + normalizedNumber.replace(/^0/, '') }, // Convert local to international format
+        ],
+      },
     });
 
     if (!user) {
