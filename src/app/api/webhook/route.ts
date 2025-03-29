@@ -15,7 +15,19 @@ const twilioClient = twilio(
 
 // Parse expense message in format: amount, category, note
 function parseExpenseMessage(message: string) {
-  const parts = message.split(',').map((part) => part.trim());
+  // Remove 'Expense:' prefix if present and trim
+  const cleanMessage = message.replace(/^Expense:\s*/i, '').trim();
+
+  // Split by 'at' first to separate location
+  const [mainPart, location] = cleanMessage
+    .split(/\s+at\s+/)
+    .map((part) => part?.trim());
+  if (!mainPart) {
+    throw new Error('Invalid message format');
+  }
+
+  // Split the main part by spaces to get amount and category
+  const parts = mainPart.split(/\s+/);
   if (parts.length < 2) {
     throw new Error('Invalid message format');
   }
@@ -29,10 +41,13 @@ function parseExpenseMessage(message: string) {
     throw new Error('Amount must be greater than 0');
   }
 
+  // Join the remaining parts as category
+  const category = parts.slice(1).join(' ');
+
   return {
     amount,
-    category: parts[1],
-    note: parts[2] || null,
+    category,
+    note: location || null,
   };
 }
 
@@ -93,22 +108,32 @@ export async function POST(request: Request) {
         // TODO: Implement Google Sheets update logic
       }
 
+      // Ensure proper WhatsApp number format for Twilio
+      const twilioTo = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
+      const twilioFrom = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
+
       // Send confirmation message
       await twilioClient.messages.create({
         body: `Expense recorded:\nAmount: ${amount}\nCategory: ${category}${
           note ? `\nNote: ${note}` : ''
         }`,
-        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
-        to: from,
+        from: twilioFrom,
+        to: twilioTo,
       });
 
       return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
+      console.error('Parse/DB error:', error);
+
+      // Ensure proper WhatsApp number format for Twilio
+      const twilioTo = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
+      const twilioFrom = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
+
       // Send error message to user
       await twilioClient.messages.create({
-        body: `Error: ${error instanceof Error ? error.message : 'Invalid format'}. Please use format: amount, category, note`,
-        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
-        to: from,
+        body: `Error: ${error instanceof Error ? error.message : 'Invalid format'}. Please use format: amount category at location`,
+        from: twilioFrom,
+        to: twilioTo,
       });
 
       return NextResponse.json(
