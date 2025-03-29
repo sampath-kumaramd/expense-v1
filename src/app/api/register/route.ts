@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(request: Request) {
   try {
     const { whatsappName, sheetUrl } = await request.json();
@@ -10,6 +13,16 @@ export async function POST(request: Request) {
     if (!whatsappName || !sheetUrl) {
       return NextResponse.json(
         { error: 'WhatsApp name and sheet URL are required' },
+        { status: 400 }
+      );
+    }
+
+    // Basic URL validation
+    try {
+      new URL(sheetUrl);
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'Invalid Google Sheet URL' },
         { status: 400 }
       );
     }

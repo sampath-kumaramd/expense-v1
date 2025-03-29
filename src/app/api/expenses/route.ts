@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: Request) {
   try {
     // TODO: Add authentication and get the user ID from the session
@@ -10,6 +13,7 @@ export async function GET(request: Request) {
       orderBy: {
         createdAt: 'desc',
       },
+      take: 100, // Limit the number of results
     });
 
     return NextResponse.json({ expenses }, { status: 200 });

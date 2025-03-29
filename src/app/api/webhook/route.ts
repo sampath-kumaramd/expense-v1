@@ -4,6 +4,9 @@ import twilio from 'twilio';
 
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Initialize Twilio client
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -22,6 +25,10 @@ function parseExpenseMessage(message: string) {
     throw new Error('Invalid amount');
   }
 
+  if (amount <= 0) {
+    throw new Error('Amount must be greater than 0');
+  }
+
   return {
     amount,
     category: parts[1],
@@ -34,6 +41,13 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const from = formData.get('From') as string;
     const body = formData.get('Body') as string;
+
+    if (!from || !body) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
     // Extract WhatsApp number from the 'from' field (remove 'whatsapp:' prefix)
     const whatsappNumber = from.replace('whatsapp:', '');
