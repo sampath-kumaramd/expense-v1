@@ -1,9 +1,8 @@
-import { PrismaClient } from '@prisma/client';
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 import twilio from 'twilio';
 
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // Initialize Twilio client
 const twilioClient = twilio(
