@@ -14,21 +14,35 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  whatsappName  String    @unique
-  sheetUrl      String
-  sheetId       String?
-  expenses      Expense[]
+  id          String    @id @default(cuid())
+  phoneNumber String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expenses    Expense[]
+  sheets      Sheet[]
+}
+
+model Sheet {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expenses  Expense[]
 }
 
 model Expense {
-  id         String   @id @default(uuid())
-  createdAt  DateTime @default(now())
-  amount     Float
-  category   String
-  note       String?
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
+  id          String   @id @default(cuid())
+  amount      Float
+  category    String
+  description String?
+  date        DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  sheetId     String
+  sheet       Sheet    @relation(fields: [sheetId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

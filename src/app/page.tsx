@@ -1,6 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
 import { UserRegistrationForm } from '@/components/UserRegistrationForm';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Home() {
   const handleRegistration = async (data: {
@@ -29,31 +33,61 @@ export default function Home() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mb-8 text-center text-4xl font-bold">
-          WhatsApp Expense Tracker
-        </h1>
+    <div className="min-h-screen bg-background">
+      <nav className="border-b">
+        <div className="container flex h-16 items-center px-4">
+          <div className="mr-4 hidden md:flex">
+            <Link href="/" className="mr-6 flex items-center space-x-2">
+              <span className="hidden font-bold sm:inline-block">
+                Expense Tracker
+              </span>
+            </Link>
+          </div>
+          <div className="flex flex-1 items-center justify-end space-x-4">
+            <Link href="/auth">
+              <Button>Sign In</Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-        <div className="mb-8 rounded-lg bg-blue-50 p-4 text-blue-800">
-          <h2 className="mb-2 font-semibold">How it works:</h2>
-          <ol className="list-inside list-decimal space-y-2">
-            <li>Register with your WhatsApp name and Google Sheet URL</li>
-            <li>
-              Send expenses in the format:
-              <code className="mx-2 rounded bg-blue-100 px-2 py-1">
-                100, Food, Lunch at restaurant
-              </code>
-            </li>
-            <li>Your expenses will be automatically logged in your sheet</li>
-          </ol>
+      <main className="container px-4 py-16">
+        <div className="flex flex-col items-center text-center">
+          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+            Track Your Expenses
+          </h1>
+          <p className="mt-4 max-w-[700px] text-gray-500 md:text-xl">
+            Easily manage and track your expenses by linking your Excel sheets.
+            Get insights into your spending patterns and take control of your finances.
+          </p>
+          <div className="mt-8">
+            <Link href="/auth">
+              <Button size="lg">Get Started</Button>
+            </Link>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold">Register</h2>
-          <UserRegistrationForm onSubmit={handleRegistration} />
+        <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border p-6">
+            <h3 className="text-xl font-bold">Phone Authentication</h3>
+            <p className="mt-2 text-gray-500">
+              Secure sign-in with your Sri Lankan phone number using SMS verification.
+            </p>
+          </div>
+          <div className="rounded-lg border p-6">
+            <h3 className="text-xl font-bold">Excel Integration</h3>
+            <p className="mt-2 text-gray-500">
+              Link your Excel sheets and automatically import your expense data.
+            </p>
+          </div>
+          <div className="rounded-lg border p-6">
+            <h3 className="text-xl font-bold">Personal Dashboard</h3>
+            <p className="mt-2 text-gray-500">
+              View and analyze your expenses with detailed insights and reports.
+            </p>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
