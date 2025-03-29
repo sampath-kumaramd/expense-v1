@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { prisma } from '@/lib/prisma';
-
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+import prisma from '@/lib/prisma';
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +10,6 @@ export async function GET(request: Request) {
       orderBy: {
         createdAt: 'desc',
       },
-      take: 100, // Limit the number of results
     });
 
     return NextResponse.json({ expenses }, { status: 200 });
