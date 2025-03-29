@@ -110,12 +110,12 @@ export async function POST(request: Request) {
 
       // Ensure proper WhatsApp number format for Twilio
       const twilioTo = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
-      const twilioFrom = process.env.TWILIO_PHONE_NUMBER
-        ? `whatsapp:${process.env.TWILIO_PHONE_NUMBER.replace(/^\+/, '')}`
+      const twilioFrom = process.env.TWILIO_WHATSAPP_NUMBER
+        ? `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER.replace(/^\+/, '')}`
         : '';
 
       if (!twilioFrom) {
-        console.error('TWILIO_PHONE_NUMBER environment variable is not set');
+        console.error('TWILIO_WHATSAPP_NUMBER environment variable is not set');
         return NextResponse.json(
           {
             success: true,
@@ -154,8 +154,8 @@ export async function POST(request: Request) {
 
       // Ensure proper WhatsApp number format for Twilio
       const twilioTo = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
-      const twilioFrom = process.env.TWILIO_PHONE_NUMBER
-        ? `whatsapp:${process.env.TWILIO_PHONE_NUMBER.replace(/^\+/, '')}`
+      const twilioFrom = process.env.TWILIO_WHATSAPP_NUMBER
+        ? `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER.replace(/^\+/, '')}`
         : '';
 
       if (twilioFrom) {
