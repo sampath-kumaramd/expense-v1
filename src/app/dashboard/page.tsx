@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation';
+
+import { UserInfoDialog } from "@/components/UserInfoDialog";
 
 interface Expense {
   id: string;
@@ -12,12 +15,18 @@ interface Expense {
   note: string | null;
 }
 
-export default function Dashboard() {
+export default function DashboardPage() {
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isLoaded && !user) {
+      router.push('/sign-in');
+      return;
+    }
+
     const fetchExpenses = async () => {
       try {
         const response = await fetch('/api/expenses');
@@ -33,10 +42,12 @@ export default function Dashboard() {
       }
     };
 
-    fetchExpenses();
-  }, []);
+    if (user) {
+      fetchExpenses();
+    }
+  }, [user, isLoaded, router]);
 
-  if (loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -45,7 +56,8 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto p-4">
+      <UserInfoDialog />
       <div className="mx-auto max-w-4xl">
         <h1 className="mb-8 text-3xl font-bold">Your Expenses</h1>
 
