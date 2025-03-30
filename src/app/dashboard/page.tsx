@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 
-import { useUser } from "@clerk/nextjs";
+import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 
-import { UserInfoDialog } from "@/components/UserInfoDialog";
+import { Navbar } from '@/components/Navbar';
+import { UserInfoDialog } from '@/components/UserInfoDialog';
 
 interface Expense {
   id: string;
@@ -56,71 +57,74 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="container mx-auto p-4">
-      <UserInfoDialog />
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-bold">Your Expenses</h1>
+    <>
+      <Navbar />
+      <main className="container mx-auto p-4">
+        <UserInfoDialog />
+        <div className="mx-auto max-w-4xl">
+          <h1 className="mb-8 text-3xl font-bold">Your Expenses</h1>
 
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                >
-                  Date
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                >
-                  Amount
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                >
-                  Category
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                >
-                  Note
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {expenses.map((expense) => (
-                <tr key={expense.id}>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {new Date(expense.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    ${expense.amount.toFixed(2)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {expense.category}
-                  </td>
-                  <td className="px-6 py-4">{expense.note || '-'}</td>
-                </tr>
-              ))}
-              {expenses.length === 0 && (
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-4 text-center text-gray-500"
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                   >
-                    No expenses recorded yet. Send a message via WhatsApp to add
-                    one!
-                  </td>
+                    Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                  >
+                    Amount
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                  >
+                    Category
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                  >
+                    Note
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {expenses.map((expense) => (
+                  <tr key={expense.id}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {new Date(expense.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      ${expense.amount.toFixed(2)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {expense.category}
+                    </td>
+                    <td className="px-6 py-4">{expense.note || '-'}</td>
+                  </tr>
+                ))}
+                {expenses.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No expenses recorded yet. Send a message via WhatsApp to
+                      add one!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
-} 
+}

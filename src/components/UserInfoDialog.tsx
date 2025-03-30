@@ -1,24 +1,24 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function UserInfoDialog() {
   const { user } = useUser();
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [sheetLink, setSheetLink] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [sheetLink, setSheetLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,11 +34,27 @@ export function UserInfoDialog() {
           hasCompletedOnboarding: true,
         },
       });
-      
+
+      // Save user data to database
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          whatsappName: phoneNumber,
+          sheetUrl: sheetLink,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to register user');
+      }
+
       // Redirect to the main app
-      router.push("/dashboard");
+      router.push('/dashboard');
     } catch (error) {
-      console.error("Error updating user info:", error);
+      console.error('Error updating user info:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -77,10 +93,10 @@ export function UserInfoDialog() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Continue"}
+            {isSubmitting ? 'Saving...' : 'Continue'}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
   );
-} 
+}
