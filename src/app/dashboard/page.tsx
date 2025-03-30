@@ -35,9 +35,10 @@ export default function DashboardPage() {
           throw new Error('Failed to fetch expenses');
         }
         const data = await response.json();
-        setExpenses(data.expenses);
+        setExpenses(data);
       } catch (error) {
         console.error('Error fetching expenses:', error);
+        setExpenses([]);
       } finally {
         setLoading(false);
       }
@@ -94,6 +95,7 @@ export default function DashboardPage() {
                   </th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-gray-200 bg-white">
                 {expenses.map((expense) => (
                   <tr key={expense.id}>

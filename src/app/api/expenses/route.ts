@@ -19,25 +19,23 @@ export async function GET(request: Request) {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        expenses: {
+          include: {
+            sheet: true,
+          },
+          orderBy: {
+            date: 'desc',
+          },
+        },
+      },
     });
 
     if (!user) {
       return new NextResponse('User not found', { status: 404 });
     }
 
-    const expenses = await prisma.expense.findMany({
-      where: {
-        userId: user.id,
-      },
-      include: {
-        sheet: true,
-      },
-      orderBy: {
-        date: 'desc',
-      },
-    });
-
-    return NextResponse.json(expenses);
+    return NextResponse.json(user.expenses);
   } catch (error) {
     console.error('[EXPENSES_GET]', error);
     return new NextResponse('Internal Error', { status: 500 });
