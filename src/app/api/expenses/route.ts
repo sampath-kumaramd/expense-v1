@@ -79,10 +79,13 @@ export async function POST(req: Request) {
       },
     });
 
+    console.log('expense after create', expense);
+
     // Get the sheet details
     const sheet = await prisma.sheet.findUnique({
       where: { id: sheetId },
     });
+    console.log('sheet after find', sheet);
 
     if (sheet?.url) {
       // Initialize Google Sheets API
@@ -90,6 +93,8 @@ export async function POST(req: Request) {
         credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || ''),
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
       });
+
+      console.log('auth', auth);
 
       const sheets = google.sheets({ version: 'v4', auth });
 
@@ -113,6 +118,7 @@ export async function POST(req: Request) {
             ],
           },
         });
+        console.log('expense', expense);
       }
     }
 
