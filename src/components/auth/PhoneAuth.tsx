@@ -39,10 +39,10 @@ export function PhoneAuth() {
         recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'normal',
           callback: () => {
-            // reCAPTCHA solved, enable the Send Code button if needed
+            // Enable send code button after reCAPTCHA is solved
+            handleSendVerificationCode();
           },
           'expired-callback': () => {
-            // Reset the reCAPTCHA when it expires
             if (recaptchaVerifierRef.current) {
               recaptchaVerifierRef.current.clear();
               recaptchaVerifierRef.current = null;
@@ -59,24 +59,26 @@ export function PhoneAuth() {
     }
   };
 
-  const handleSendCode = async () => {
-    if (!auth) {
-      toast.error('Authentication not initialized');
-      return;
-    }
-
+  const handleInitiateVerification = () => {
     if (!phoneNumber) {
       toast.error('Please enter a phone number');
       return;
     }
 
-    try {
-      const recaptchaVerifier = setupRecaptcha();
-      if (!recaptchaVerifier) {
-        toast.error('Authentication setup failed');
-        return;
-      }
+    // Setup reCAPTCHA when user clicks the initial verify button
+    setupRecaptcha();
+    
+    // Render the reCAPTCHA
+    recaptchaVerifierRef.current?.render();
+  };
 
+  const handleSendVerificationCode = async () => {
+    if (!auth || !recaptchaVerifierRef.current) {
+      toast.error('Authentication not initialized');
+      return;
+    }
+
+    try {
       // Ensure phone number is in international format
       const formattedPhone = phoneNumber.startsWith('+') 
         ? phoneNumber 
@@ -87,14 +89,13 @@ export function PhoneAuth() {
       const confirmationResult = await signInWithPhoneNumber(
         auth,
         formattedPhone,
-        recaptchaVerifier
+        recaptchaVerifierRef.current
       );
       setVerificationId(confirmationResult.verificationId);
       setStep('otp');
       toast.success('Verification code sent successfully!');
     } catch (error) {
       console.error('Error sending verification code:', error);
-      // Reset reCAPTCHA on error
       if (recaptchaVerifierRef.current) {
         recaptchaVerifierRef.current.clear();
         recaptchaVerifierRef.current = null;
@@ -151,11 +152,11 @@ export function PhoneAuth() {
           </div>
           <div id="recaptcha-container" className="flex justify-center"></div>
           <Button 
-            onClick={handleSendCode} 
+            onClick={handleInitiateVerification} 
             className="w-full"
             disabled={!phoneNumber}
           >
-            Send Verification Code
+            Verify Phone Number
           </Button>
         </div>
       ) : (
