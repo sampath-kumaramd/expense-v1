@@ -44,6 +44,7 @@ export function UserInfoDialog() {
         body: JSON.stringify({
           whatsappName: phoneNumber,
           sheetUrl: sheetLink,
+          email: user?.primaryEmailAddress?.emailAddress,
         }),
       });
 
@@ -66,34 +67,34 @@ export function UserInfoDialog() {
         <DialogHeader>
           <DialogTitle>Complete Your Profile</DialogTitle>
           <DialogDescription>
-            Please provide your phone number and Google Sheet link to continue.
+            Please provide your contact information to continue.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+          <div>
+            <Label htmlFor="phoneNumber">WhatsApp Number</Label>
             <Input
-              id="phone"
-              type="tel"
-              placeholder="+1234567890"
+              id="phoneNumber"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
+              placeholder="Enter your WhatsApp number"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="sheet">Google Sheet Link</Label>
+
+          <div>
+            <Label htmlFor="sheetLink">Google Sheet URL</Label>
             <Input
-              id="sheet"
-              type="url"
-              placeholder="https://docs.google.com/spreadsheets/d/..."
+              id="sheetLink"
               value={sheetLink}
               onChange={(e) => setSheetLink(e.target.value)}
               required
+              placeholder="Enter your Google Sheet URL"
             />
           </div>
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Continue'}
+            {isSubmitting ? 'Saving...' : 'Save and Continue'}
           </Button>
         </form>
       </DialogContent>

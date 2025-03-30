@@ -30,6 +30,7 @@
     "googleapis": "^148.0.0",
     "lucide-react": "^0.427.0",
     "next": "14.2.5",
+    "next-auth": "^4.24.11",
     "onchange": "^7.1.0",
     "prisma": "^6.5.0",
     "react": "^18",
